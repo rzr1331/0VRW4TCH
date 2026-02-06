@@ -1,0 +1,4 @@
+policies:
+  - id: deny-unknown-egress
+    description: Block outbound traffic to unknown destinations
+    severity: high

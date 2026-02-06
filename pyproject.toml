@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "autonomous-secops-platform"
+version = "0.1.0"
+description = "Autonomous multi-agent security and operations platform"
+requires-python = ">=3.11"
+readme = "README.md"
+license = "Apache-2.0"
+dependencies = [
+    "greenlet>=3.3.1",
+]
+
+[tool.setuptools.packages.find]
+include = ["agents*", "shared*", "secops_platform*"]
+exclude = ["tests*", "deployment*", "config*", "adk_config*", "data*", "docs*", "scripts*"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]

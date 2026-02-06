@@ -1,0 +1,5 @@
+# Placeholder runtime settings for ADK-based execution.
+app_name: autonomous-secops-platform
+default_model: gemini-2.5-flash-lite
+session_service: in_memory
+tracing: enabled

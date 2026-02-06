@@ -1,0 +1,89 @@
+# Autonomous Multi-Agent Security & Operations Platform
+
+This repository scaffolds a multi-agent security monitoring and operations platform built around a layered agent ecosystem and a control plane for governance and oversight. It is implemented on top of Google ADK.
+
+## What is implemented now
+- Full project layout with ADK-based agents across all layers
+- Shared models, tools, and utilities with minimal working stubs
+- ADK Runner orchestration with session handling
+- Configuration and policy scaffolding
+
+## Quick start (local)
+1. Create a virtual environment and install dependencies.
+2. Set your Gemini API key (ADK uses Gemini by default).
+3. Run the sample orchestrator demo.
+
+Example:
+```bash
+python -m venv .venv
+. .venv/bin/activate
+python -m pip install -r requirements.txt
+python -m secops_platform.orchestrator.orchestrator
+```
+
+Configure variables in `/Users/nishant/Projects/psyborg/.env` before running.
+Use `not_available` (or `none`) for values not present on a given server.
+
+## Session storage
+By default, the orchestrator uses ADK's `DatabaseSessionService` with a local SQLite file at `./data/adk_sessions.db`.
+Set `ADK_SESSION_DB_URL` to use a different backend (for example PostgreSQL with an async driver), or set
+`ADK_SESSION_DB_PATH` to change the default SQLite file path.
+
+Examples:
+```bash
+export ADK_SESSION_DB_URL=\"sqlite+aiosqlite:///./data/adk_sessions.db\"
+export ADK_SESSION_DB_URL=\"postgresql+asyncpg://secops:secops@localhost:5432/secops\"
+```
+
+## Memory (long-term recall)
+ADK memory is separate from session state. By default we use an in-memory memory service for local development.
+To persist memory across runs, use Vertex AI Memory Bank and set the required environment variables.
+
+Examples:
+```bash
+export ADK_MEMORY_BACKEND=\"in_memory\"
+
+export ADK_MEMORY_BACKEND=\"vertex\"
+export GOOGLE_CLOUD_PROJECT=\"your-gcp-project\"
+export GOOGLE_CLOUD_LOCATION=\"us-central1\"
+export ADK_AGENT_ENGINE_ID=\"your-agent-engine-id\"
+```
+
+Set `ADK_PRELOAD_MEMORY=true` to preload memories into the context automatically.
+
+## Live Metrics Backend
+`system_health` can query Prometheus or VictoriaMetrics generically. Set one of:
+- `METRICS_BACKEND_URL`
+- `PROMETHEUS_URL`
+- `VICTORIAMETRICS_URL`
+
+Optional auth:
+- `METRICS_BEARER_TOKEN`
+
+Optional per-metric query overrides:
+- `METRIC_QUERY_CPU_USAGE_PERCENT`
+- `METRIC_QUERY_MEMORY_USAGE_PERCENT`
+- `METRIC_QUERY_DISK_USAGE_PERCENT`
+- `METRIC_QUERY_NETWORK_IO_MBPS`
+- `METRIC_QUERY_REQUEST_P95_MS`
+- `METRIC_QUERY_ERROR_RATE_PERCENT`
+
+Example:
+```bash
+export METRICS_BACKEND_URL="http://your-prometheus:9090"
+export METRICS_BEARER_TOKEN="your-token-if-needed"
+```
+
+## Structure
+- `agents/`: Agent implementations organized by layer
+- `shared/`: Shared models, tools, and utilities
+- `secops_platform/`: Non-ADK services (orchestrator, API, security)
+- `adk_config/`: ADK runtime and agent configurations
+- `config/`: Environment settings and policy files
+- `deployment/`: Kubernetes, Helm, Terraform, Docker
+- `docs/`: Architecture and integration docs
+
+## Notes
+- Set `ADK_MODEL` to override the default model (`gemini-2.5-flash-lite`).
+- Extend each agent’s tools to integrate real data sources and actions.
+- Output contracts are defined in `/Users/nishant/Projects/psyborg/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.

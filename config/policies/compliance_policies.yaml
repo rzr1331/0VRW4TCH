@@ -1,0 +1,4 @@
+policies:
+  - id: log-retention-365
+    description: Retain logs for 365 days
+    severity: medium
