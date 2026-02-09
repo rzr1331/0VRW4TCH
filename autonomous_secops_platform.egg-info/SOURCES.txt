@@ -18,6 +18,7 @@ agents/action/ops_remediator/tools.py
 agents/action/rollback_orchestrator/agent.py
 agents/action/rollback_orchestrator/prompts.py
 agents/action/rollback_orchestrator/tools.py
+agents/action/security_enforcer/__init__.py
 agents/action/security_enforcer/actuators.py
 agents/action/security_enforcer/agent.py
 agents/action/security_enforcer/prompts.py
@@ -40,6 +41,9 @@ agents/analysis/predictive_forecaster/tools.py
 agents/analysis/root_cause_analyzer/agent.py
 agents/analysis/root_cause_analyzer/prompts.py
 agents/analysis/root_cause_analyzer/tools.py
+agents/analysis/thought_agent/__init__.py
+agents/analysis/thought_agent/agent.py
+agents/analysis/thought_agent/prompts.py
 agents/analysis/vulnerability_assessor/agent.py
 agents/analysis/vulnerability_assessor/prompts.py
 agents/analysis/vulnerability_assessor/tools.py
@@ -63,6 +67,7 @@ agents/decision/risk_evaluator/tools.py
 agents/decision/runbook_selector/agent.py
 agents/decision/runbook_selector/prompts.py
 agents/decision/runbook_selector/tools.py
+agents/decision/security_magistrate/__init__.py
 agents/decision/security_magistrate/agent.py
 agents/decision/security_magistrate/policies.py
 agents/decision/security_magistrate/prompts.py
@@ -130,6 +135,15 @@ shared/models/contracts.py
 shared/models/incident.py
 shared/models/message.py
 shared/models/vulnerability.py
+shared/security/__init__.py
+shared/security/mock_signals.py
+shared/security/models.py
+shared/security_tools/__init__.py
+shared/security_tools/code_executor.py
+shared/security_tools/common.py
+shared/security_tools/linux_command.py
+shared/security_tools/reasoning.py
+shared/security_tools/ssh_command.py
 shared/tools/__init__.py
 shared/tools/asset_discovery_tools.py
 shared/tools/cloud_tools.py

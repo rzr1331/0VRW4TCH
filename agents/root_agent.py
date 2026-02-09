@@ -18,14 +18,14 @@ from agents.analysis.root_cause_analyzer.agent import agent as root_cause_analyz
 from agents.analysis.vulnerability_assessor.agent import agent as vulnerability_assessor_agent
 from agents.analysis.pattern_learner.agent import agent as pattern_learner_agent
 from agents.analysis.predictive_forecaster.agent import agent as predictive_forecaster_agent
-from agents.decision.security_magistrate.agent import agent as security_magistrate_agent
+from agents.decision.security_magistrate.agent import magistrate_agent as security_magistrate_agent
 from agents.decision.health_magistrate.agent import agent as health_magistrate_agent
 from agents.decision.compliance_magistrate.agent import agent as compliance_magistrate_agent
 from agents.decision.consensus_engine.agent import agent as consensus_engine_agent
 from agents.decision.impact_assessor.agent import agent as impact_assessor_agent
 from agents.decision.runbook_selector.agent import agent as runbook_selector_agent
 from agents.decision.risk_evaluator.agent import agent as risk_evaluator_agent
-from agents.action.security_enforcer.agent import agent as security_enforcer_agent
+from agents.action.security_enforcer.agent import security_enforcer_agent as security_enforcer_agent
 from agents.action.ops_remediator.agent import agent as ops_remediator_agent
 from agents.action.config_manager.agent import agent as config_manager_agent
 from agents.action.rollback_orchestrator.agent import agent as rollback_orchestrator_agent
@@ -108,10 +108,12 @@ ROOT_INSTRUCTION = (
     "- Include recommended_next_steps in every final response."
 )
 
+from config.security_config import get_model_for_agent
+
 root_agent = Agent(
     name="secops_root",
     description="Root orchestrator for the autonomous SecOps platform.",
-    model=default_model(),
+    model=get_model_for_agent("root"),
     instruction=ROOT_INSTRUCTION,
     sub_agents=SUB_AGENTS,
     tools=memory_tools(),
