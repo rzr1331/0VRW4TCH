@@ -1,12 +1,13 @@
 from __future__ import annotations
+# ruff: noqa: E402
 
 import asyncio
-import os
 from pathlib import Path
 
 from dotenv import load_dotenv
+from google.adk.errors.already_exists_error import AlreadyExistsError
 from google.adk.runners import Runner
-from google.adk.sessions import DatabaseSessionService, InMemorySessionService
+from google.adk.sessions import DatabaseSessionService
 from google.genai.types import Content, Part
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
@@ -27,9 +28,8 @@ async def demo() -> None:
             db_path = ROOT_DIR / db_path
         db_path.parent.mkdir(parents=True, exist_ok=True)
         db_url = f"sqlite+aiosqlite:///{db_path.resolve()}"
+    session_service = DatabaseSessionService(db_url=db_url)
 
-    # session_service = DatabaseSessionService(db_url=db_url)
-    session_service = InMemorySessionService()
     memory_service = build_memory_service()
     runner = Runner(
         app_name=app_name(),
@@ -41,11 +41,15 @@ async def demo() -> None:
     user_id = env_value("ADK_USER_ID", "local-user") or "local-user"
     session_id = env_value("ADK_SESSION_ID", "local-session") or "local-session"
 
-    await session_service.create_session(
-        app_name=app_name(),
-        user_id=user_id,
-        session_id=session_id,
-    )
+    try:
+        await session_service.create_session(
+            app_name=app_name(),
+            user_id=user_id,
+            session_id=session_id,
+        )
+    except AlreadyExistsError:
+        # Allow idempotent local reruns with the same session id.
+        pass
 
     prompt = env_value("ADK_PROMPT", "Run a quick health check and summarize any risks.") or "Run a quick health check and summarize any risks."
     user_message = Content(role="user", parts=[Part(text=prompt)])

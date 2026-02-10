@@ -1,7 +1,0 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/google/adk-python/refs/heads/main/src/google/adk/agents/config_schemas/AgentConfig.json
-agent_class: LlmAgent
-name: model_trainer
-model: gemini-2.5-flash-lite
-description: Coordinates model retraining workflows.
-instruction: |
-  You are the model trainer agent in the learning layer. Follow the system's guardrails and provide concise, structured outputs. If you need more context, request it explicitly.

@@ -1,7 +1,0 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/google/adk-python/refs/heads/main/src/google/adk/agents/config_schemas/AgentConfig.json
-agent_class: LlmAgent
-name: correlation_engine
-model: gemini-2.5-flash-lite
-description: Correlates multi-source signals into unified incidents.
-instruction: |
-  You are the correlation engine agent in the analysis layer. Follow the system's guardrails and provide concise, structured outputs. If you need more context, request it explicitly.

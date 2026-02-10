@@ -21,7 +21,7 @@ python -m pip install -r requirements.txt
 python -m secops_platform.orchestrator.orchestrator
 ```
 
-Configure variables in `/Users/nishant/Projects/psyborg/.env` before running.
+Configure variables in `/Users/nishant/Projects/0VRW4TCH/.env` before running.
 Use `not_available` (or `none`) for values not present on a given server.
 
 ## Session storage
@@ -78,12 +78,12 @@ export METRICS_BEARER_TOKEN="your-token-if-needed"
 - `agents/`: Agent implementations organized by layer
 - `shared/`: Shared models, tools, and utilities
 - `secops_platform/`: Non-ADK services (orchestrator, API, security)
-- `adk_config/`: ADK runtime and agent configurations
 - `config/`: Environment settings and policy files
 - `deployment/`: Kubernetes, Helm, Terraform, Docker
 - `docs/`: Architecture and integration docs
 
 ## Notes
 - Set `ADK_MODEL` to override the default model (`gemini-2.5-flash-lite`).
+- Agent definitions and instructions are Python-only under `agents/` (no YAML mirror).
 - Extend each agent’s tools to integrate real data sources and actions.
-- Output contracts are defined in `/Users/nishant/Projects/psyborg/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.
+- Output contracts are defined in `0VRW4TCH/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.

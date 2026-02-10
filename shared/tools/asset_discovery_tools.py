@@ -196,6 +196,16 @@ def _discover_open_ports(limit: int = 200) -> Dict[str, Any]:
     return {"available": False, "listeners": []}
 
 
+def _is_public_listener(local_address: str) -> bool:
+    normalized = (local_address or "").strip().lower()
+    return (
+        normalized.startswith("0.0.0.0:")
+        or normalized.startswith("*:")
+        or normalized.startswith("[::]:")
+        or normalized.startswith(":::")
+    )
+
+
 def _map_processes_to_services(
     processes: List[Dict[str, Any]],
     services: List[Dict[str, Any]],
@@ -240,6 +250,11 @@ def discover_runtime_assets(max_processes: int = 200) -> Dict[str, Any]:
     running_services = systemd_info.get("running_services", [])
     service_process_map = _map_processes_to_services(processes, running_services)
     listeners = open_ports_info.get("listeners", [])
+    public_listeners = [
+        listener
+        for listener in listeners
+        if _is_public_listener(str(listener.get("local_address", "")))
+    ]
 
     runtime_profile = "dockerized" if containers else "host-process"
     if containers and (python_processes or running_services):
@@ -321,9 +336,12 @@ def discover_runtime_assets(max_processes: int = 200) -> Dict[str, Any]:
             "source": open_ports_info.get("source"),
             "listeners": listeners[:100],
             "count": len(listeners),
+            "public_listeners": public_listeners[:100],
+            "public_count": len(public_listeners),
         },
         "processes": {
             "sample_count": len(processes),
+            "sample": processes[:200],
             "python_service_count": len(python_processes),
             "python_services": python_processes[:80],
         },
