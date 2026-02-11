@@ -45,9 +45,19 @@ SUSPICIOUS_PROCESS_PATTERNS: Dict[str, str] = {
 
 METRIC_THRESHOLDS: Dict[str, Dict[Severity, float]] = {
     "cpu_usage_percent": {"medium": 75.0, "high": 85.0, "critical": 93.0, "low": 60.0},
-    "memory_usage_percent": {"medium": 78.0, "high": 88.0, "critical": 95.0, "low": 65.0},
+    "memory_usage_percent": {
+        "medium": 78.0,
+        "high": 88.0,
+        "critical": 95.0,
+        "low": 65.0,
+    },
     "disk_usage_percent": {"medium": 80.0, "high": 90.0, "critical": 96.0, "low": 70.0},
-    "request_p95_ms": {"medium": 350.0, "high": 700.0, "critical": 1200.0, "low": 250.0},
+    "request_p95_ms": {
+        "medium": 350.0,
+        "high": 700.0,
+        "critical": 1200.0,
+        "low": 250.0,
+    },
     "error_rate_percent": {"medium": 1.5, "high": 3.0, "critical": 5.0, "low": 0.7},
 }
 
@@ -62,7 +72,9 @@ def _public_listener(local_address: str) -> bool:
     )
 
 
-def _severity_from_threshold(value: float, thresholds: Dict[Severity, float]) -> Severity | None:
+def _severity_from_threshold(
+    value: float, thresholds: Dict[Severity, float]
+) -> Severity | None:
     if value >= thresholds["critical"]:
         return "critical"
     if value >= thresholds["high"]:
@@ -98,8 +110,12 @@ def _add_finding(
     )
 
 
-def _metric_anomalies(metrics_bundle: Dict[str, Any], findings: List[Dict[str, Any]]) -> None:
-    series = metrics_bundle.get("series", []) if isinstance(metrics_bundle, dict) else []
+def _metric_anomalies(
+    metrics_bundle: Dict[str, Any], findings: List[Dict[str, Any]]
+) -> None:
+    series = (
+        metrics_bundle.get("series", []) if isinstance(metrics_bundle, dict) else []
+    )
     for sample in series:
         if not isinstance(sample, dict):
             continue
@@ -121,12 +137,18 @@ def _metric_anomalies(metrics_bundle: Dict[str, Any], findings: List[Dict[str, A
             severity=severity,
             title=f"Anomalous metric: {name}",
             description=f"{name} exceeded expected threshold with latest value {latest}.",
-            evidence=[f"metric={name}", f"latest={latest}", f"source={metrics_bundle.get('source', 'unknown')}"],
+            evidence=[
+                f"metric={name}",
+                f"latest={latest}",
+                f"source={metrics_bundle.get('source', 'unknown')}",
+            ],
             recommendation="Review workload saturation, regressions, and alert routing for this metric.",
         )
 
 
-def _port_exposure_anomalies(discovered_assets: Dict[str, Any], findings: List[Dict[str, Any]]) -> None:
+def _port_exposure_anomalies(
+    discovered_assets: Dict[str, Any], findings: List[Dict[str, Any]]
+) -> None:
     listeners = discovered_assets.get("open_ports", {}).get("listeners", [])
     for listener in listeners:
         if not isinstance(listener, dict):
@@ -155,7 +177,9 @@ def _port_exposure_anomalies(discovered_assets: Dict[str, Any], findings: List[D
         )
 
 
-def _suspicious_process_anomalies(discovered_assets: Dict[str, Any], findings: List[Dict[str, Any]]) -> None:
+def _suspicious_process_anomalies(
+    discovered_assets: Dict[str, Any], findings: List[Dict[str, Any]]
+) -> None:
     process_sample = discovered_assets.get("processes", {}).get("sample", [])
     for process in process_sample:
         if not isinstance(process, dict):
@@ -212,7 +236,9 @@ def _risk_scores(findings: List[Dict[str, Any]], metrics_source: str) -> Dict[st
     monitoring = min(monitoring, 100)
     cybersecurity = min(cybersecurity, 100)
     overall = min(round((monitoring + cybersecurity) / 2), 100)
-    confidence = 0.45 if metrics_source == "mock" else 0.8 if metrics_source == "live" else 0.6
+    confidence = (
+        0.45 if metrics_source == "mock" else 0.8 if metrics_source == "live" else 0.6
+    )
     return {
         "monitoring_risk": monitoring,
         "cybersecurity_risk": cybersecurity,
@@ -238,13 +264,17 @@ def analyze_system_services(
     services_count = int(discovered_assets.get("systemd", {}).get("count", 0))
     containers_count = int(discovered_assets.get("docker", {}).get("count", 0))
     open_ports_count = int(discovered_assets.get("open_ports", {}).get("count", 0))
-    python_services = int(discovered_assets.get("processes", {}).get("python_service_count", 0))
+    python_services = int(
+        discovered_assets.get("processes", {}).get("python_service_count", 0)
+    )
 
     notes: List[str] = []
     if metrics_source == "mock":
         notes.append("Telemetry source is mock; anomaly confidence is reduced.")
     if services_count == 0 and containers_count == 0:
-        notes.append("No running systemd services or docker containers were discovered.")
+        notes.append(
+            "No running systemd services or docker containers were discovered."
+        )
 
     risk = _risk_scores(findings, metrics_source)
 
@@ -278,10 +308,10 @@ def analyze_local_system(
 ) -> Dict[str, Any]:
     discovered_assets = discover_runtime_assets()
     metrics_bundle = fetch_metrics(query)
-    analysis = analyze_system_services(discovered_assets=discovered_assets, metrics_bundle=metrics_bundle)
+    analysis = analyze_system_services(
+        discovered_assets=discovered_assets, metrics_bundle=metrics_bundle
+    )
     return {
         "query": query,
-        "discovered_assets": discovered_assets,
-        "metrics": metrics_bundle,
         "analysis": analysis,
     }

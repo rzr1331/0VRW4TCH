@@ -23,7 +23,10 @@ from shared.utils.logging import setup_logging
 async def demo() -> None:
     db_url = env_value("ADK_SESSION_DB_URL")
     if not db_url:
-        db_path = Path(env_value("ADK_SESSION_DB_PATH", "./data/adk_sessions.db") or "./data/adk_sessions.db")
+        db_path = Path(
+            env_value("ADK_SESSION_DB_PATH", "./data/adk_sessions.db")
+            or "./data/adk_sessions.db"
+        )
         if not db_path.is_absolute():
             db_path = ROOT_DIR / db_path
         db_path.parent.mkdir(parents=True, exist_ok=True)
@@ -51,7 +54,10 @@ async def demo() -> None:
         # Allow idempotent local reruns with the same session id.
         pass
 
-    prompt = env_value("ADK_PROMPT", "Run a quick health check and summarize any risks.") or "Run a quick health check and summarize any risks."
+    prompt = (
+        env_value("ADK_PROMPT", "Run a quick health check and summarize any risks.")
+        or "Run a quick health check and summarize any risks."
+    )
     user_message = Content(role="user", parts=[Part(text=prompt)])
 
     async for event in runner.run_async(

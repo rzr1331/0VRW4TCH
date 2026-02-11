@@ -1,11 +1,31 @@
 Metadata-Version: 2.4
-Name: autonomous-secops-platform
+Name: 0VRW4TCH
 Version: 0.1.0
 Summary: Autonomous multi-agent security and operations platform
 License-Expression: Apache-2.0
 Requires-Python: >=3.11
 Description-Content-Type: text/markdown
 Requires-Dist: greenlet>=3.3.1
+Requires-Dist: fastapi>=0.110
+Requires-Dist: aiosqlite>=0.20
+Requires-Dist: asyncpg>=0.29
+Requires-Dist: google-adk
+Requires-Dist: httpx>=0.26
+Requires-Dist: kafka-python>=2.0
+Requires-Dist: neo4j>=5.19
+Requires-Dist: opentelemetry-api>=1.23
+Requires-Dist: opentelemetry-sdk>=1.23
+Requires-Dist: prometheus-client>=0.20
+Requires-Dist: psycopg[binary]>=3.1
+Requires-Dist: pydantic>=2.6
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: pytest>=7.4
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: redis>=5.0
+Requires-Dist: requests>=2.31
+Requires-Dist: ruff>=0.4
+Requires-Dist: uvicorn[standard]>=0.27
+Requires-Dist: dotenv>=0.9.9
 
 # Autonomous Multi-Agent Security & Operations Platform
 
@@ -30,7 +50,7 @@ python -m pip install -r requirements.txt
 python -m secops_platform.orchestrator.orchestrator
 ```
 
-Configure variables in `/Users/nishant/Projects/psyborg/.env` before running.
+Configure variables in `/Users/nishant/Projects/0VRW4TCH/.env` before running.
 Use `not_available` (or `none`) for values not present on a given server.
 
 ## Session storage
@@ -87,12 +107,12 @@ export METRICS_BEARER_TOKEN="your-token-if-needed"
 - `agents/`: Agent implementations organized by layer
 - `shared/`: Shared models, tools, and utilities
 - `secops_platform/`: Non-ADK services (orchestrator, API, security)
-- `adk_config/`: ADK runtime and agent configurations
 - `config/`: Environment settings and policy files
 - `deployment/`: Kubernetes, Helm, Terraform, Docker
 - `docs/`: Architecture and integration docs
 
 ## Notes
 - Set `ADK_MODEL` to override the default model (`gemini-2.5-flash-lite`).
+- Agent definitions and instructions are Python-only under `agents/` (no YAML mirror).
 - Extend each agent’s tools to integrate real data sources and actions.
-- Output contracts are defined in `/Users/nishant/Projects/psyborg/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.
+- Output contracts are defined in `0VRW4TCH/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.

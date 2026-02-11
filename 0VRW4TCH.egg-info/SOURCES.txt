@@ -1,5 +1,10 @@
 README.md
 pyproject.toml
+0VRW4TCH.egg-info/PKG-INFO
+0VRW4TCH.egg-info/SOURCES.txt
+0VRW4TCH.egg-info/dependency_links.txt
+0VRW4TCH.egg-info/requires.txt
+0VRW4TCH.egg-info/top_level.txt
 agents/__init__.py
 agents/root_agent.py
 agents/action/__init__.py
@@ -97,11 +102,6 @@ agents/perception/system_health/tools.py
 agents/perception/threat_intelligence/agent.py
 agents/perception/threat_intelligence/prompts.py
 agents/perception/threat_intelligence/tools.py
-autonomous_secops_platform.egg-info/PKG-INFO
-autonomous_secops_platform.egg-info/SOURCES.txt
-autonomous_secops_platform.egg-info/dependency_links.txt
-autonomous_secops_platform.egg-info/requires.txt
-autonomous_secops_platform.egg-info/top_level.txt
 secops_platform/__init__.py
 secops_platform/api/__init__.py
 secops_platform/api/main.py
@@ -137,6 +137,7 @@ shared/tools/kubernetes_tools.py
 shared/tools/monitoring_tools.py
 shared/tools/notification_tools.py
 shared/tools/security_tools.py
+shared/tools/system_analyzer_tools.py
 shared/utils/__init__.py
 shared/utils/config.py
 shared/utils/encryption.py

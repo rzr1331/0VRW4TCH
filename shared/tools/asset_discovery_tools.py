@@ -146,7 +146,7 @@ def _discover_open_ports(limit: int = 200) -> Dict[str, Any]:
                 local = parts[4]
                 port_match = re.search(r":(\d+)$", local)
                 pid_match = re.search(r"pid=(\d+)", line)
-                process_match = re.search(r'users:\\(\\(\"([^"]+)"', line)
+                process_match = re.search(r'users:\(\(\"([^"]+)"', line)
                 if port_match is None:
                     continue
                 ports.append(
