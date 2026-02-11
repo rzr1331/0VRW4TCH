@@ -11,14 +11,14 @@ Each module defines one threat scenario:
 
 # Import all scenarios to register them
 # from .cryptomining import CryptominingScenario
-# from .ransomware import RansomwareScenario
+from .ransomware import RansomwareScenario
 # from .data_exfiltration import DataExfiltrationScenario
 # from .credential_theft import CredentialTheftScenario
 from .container_escape import ContainerEscapeScenario
 
 __all__ = [
     # "CryptominingScenario",
-    # "RansomwareScenario", 
+    "RansomwareScenario", 
     # "DataExfiltrationScenario",
     # "CredentialTheftScenario",
     "ContainerEscapeScenario",

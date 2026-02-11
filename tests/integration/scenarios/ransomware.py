@@ -9,7 +9,7 @@ Signals:
 - Known ransomware process detected
 """
 
-from tests.base import ScenarioTest, ThreatScenario, register_scenario
+from tests.integration.base import ScenarioTest, ThreatScenario, register_scenario
 
 
 @register_scenario

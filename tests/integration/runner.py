@@ -23,7 +23,7 @@ def discover_scenarios():
     """Discover and import all scenario modules."""
     # Import scenarios to trigger @register_scenario decorators
     # import tests.integration.scenarios.cryptomining
-    # import tests.integration.scenarios.ransomware
+    import tests.integration.scenarios.ransomware
     # import tests.integration.scenarios.data_exfiltration
     # import tests.integration.scenarios.credential_theft
     import tests.integration.scenarios.container_escape

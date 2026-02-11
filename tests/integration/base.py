@@ -102,12 +102,14 @@ recommend appropriate remediation actions.
 
 {signals_text}
 
-Please:
+Please delegate this entire security incident to the 'security_magistrate' agent.
+
+Tell the security_magistrate to:
 1. Use analyze_threat_signals to correlate the signals
 2. Use assess_severity to determine the severity level
 3. Use classify_attack_type to identify the attack
 4. Decide on recommended actions
-5. If remediation is needed, delegate to Action Kamen
+5. If remediation is needed, delegate to security_enforcer (Action Kamen)
 """
     
     def _format_signals(self, signals: List[Dict[str, Any]]) -> str:
