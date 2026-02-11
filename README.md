@@ -3,10 +3,20 @@
 This repository scaffolds a multi-agent security monitoring and operations platform built around a layered agent ecosystem and a control plane for governance and oversight. It is implemented on top of Google ADK.
 
 ## What is implemented now
-- Full project layout with ADK-based agents across all layers
+- Focused ADK-based monitoring stack for asset discovery, system health, anomaly detection, and vulnerability checks
 - Shared models, tools, and utilities with minimal working stubs
 - ADK Runner orchestration with session handling
 - Configuration and policy scaffolding
+
+## Active agents (current focus)
+- `scope_scanner`: discovers in-scope assets/services and monitoring targets
+- `system_health`: evaluates runtime health and monitoring/security coverage
+- `anomaly_detector`: scores anomalies and surfaces evidence-backed findings
+- `vulnerability_assessor`: runs targeted security scan checks for discovered risk areas
+
+## Optional Tooling Behavior
+- Discovery and security scans are best-effort: missing tools (for example `kubectl`, `aws`, `gcloud`, `az`, `falco`, `osqueryi`, `trivy`, `nmap`) do not fail execution.
+- The platform returns partial results with explicit `missing_tools`, `warnings`, and source status fields so you can operate across heterogeneous servers.
 
 ## Quick start (local)
 1. Create a virtual environment and install dependencies.

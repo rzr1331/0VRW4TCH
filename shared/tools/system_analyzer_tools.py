@@ -313,5 +313,7 @@ def analyze_local_system(
     )
     return {
         "query": query,
+        "discovered_assets": discovered_assets,
+        "metrics": metrics_bundle,
         "analysis": analysis,
     }
