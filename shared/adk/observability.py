@@ -85,12 +85,15 @@ def _terminal_width() -> int:
 
 def _wrap_row(label: str, value: Any, width: int) -> list[str]:
     prefix = f"{label}: "
-    text_value = str(value).replace("\n", " | ")
     available = max(12, width - len(prefix))
-    wrapped = textwrap.wrap(text_value, width=available) or [""]
-    lines = [f"{prefix}{wrapped[0]}"]
+    raw_lines = str(value).splitlines() or [""]
+    wrapped_chunks: list[str] = []
+    for raw in raw_lines:
+        wrapped = textwrap.wrap(raw, width=available) or [""]
+        wrapped_chunks.extend(wrapped)
+    lines = [f"{prefix}{wrapped_chunks[0]}"]
     indent = " " * len(prefix)
-    for extra in wrapped[1:]:
+    for extra in wrapped_chunks[1:]:
         lines.append(f"{indent}{extra}")
     return lines
 
@@ -194,7 +197,16 @@ def _extract_model_message(llm_response: Any) -> tuple[str, list[str], str]:
                     if isinstance(call_name, str) and call_name:
                         function_calls.append(call_name)
 
-    summary = " | ".join(text_chunks[:2]) if text_chunks else "(non-text model response)"
+    summary = "(non-text model response)"
+    if text_chunks:
+        first = text_chunks[0]
+        stripped = first.strip()
+        if stripped.startswith("```json"):
+            summary = "Text response with JSON payload (see Raw Output)."
+        elif len(stripped) > 300:
+            summary = f"{stripped[:297]}..."
+        else:
+            summary = stripped
     return summary, function_calls[:10], raw
 
 

@@ -46,6 +46,7 @@ class RuntimeTrace:
     function_calls: int = 0
     function_responses: int = 0
     text_messages: int = 0
+    all_text_parts: list[str] = field(default_factory=list)
     final_text_parts: list[str] = field(default_factory=list)
     root_final_summary: str | None = None
     root_next_steps: list[str] = field(default_factory=list)
@@ -77,12 +78,15 @@ def _terminal_width() -> int:
 
 def _wrap_row(label: str, value: Any, width: int) -> list[str]:
     prefix = f"{label}: "
-    text_value = str(value).replace("\n", " | ")
     available = max(12, width - len(prefix))
-    wrapped = textwrap.wrap(text_value, width=available) or [""]
-    lines = [f"{prefix}{wrapped[0]}"]
+    raw_lines = str(value).splitlines() or [""]
+    wrapped_chunks: list[str] = []
+    for raw in raw_lines:
+        wrapped = textwrap.wrap(raw, width=available) or [""]
+        wrapped_chunks.extend(wrapped)
+    lines = [f"{prefix}{wrapped_chunks[0]}"]
     indent = " " * len(prefix)
-    for extra in wrapped[1:]:
+    for extra in wrapped_chunks[1:]:
         lines.append(f"{indent}{extra}")
     return lines
 
@@ -189,6 +193,36 @@ def _parse_json_text(text: str) -> dict[str, Any] | None:
     return None
 
 
+def _derived_summary_from_payload(payload: dict[str, Any]) -> str | None:
+    if "health_status" in payload:
+        health = payload.get("health_status", "unknown")
+        telemetry = payload.get("telemetry_source", "unknown")
+        risks = payload.get("risks", [])
+        risk_count = len(risks) if isinstance(risks, list) else 0
+        return (
+            f"System health is {health}; identified {risk_count} risk item(s); "
+            f"telemetry source is {telemetry}."
+        )
+
+    summary = payload.get("summary")
+    if isinstance(summary, dict):
+        if "total_findings" in summary:
+            return f"Security scan completed with {summary.get('total_findings', 0)} finding(s)."
+        if "total_assets" in summary:
+            return f"Asset discovery completed with {summary.get('total_assets', 0)} discovered assets."
+
+    analysis = payload.get("analysis")
+    if isinstance(analysis, dict):
+        analysis_summary = analysis.get("summary")
+        risk_scores = analysis.get("risk_scores")
+        total = analysis_summary.get("total") if isinstance(analysis_summary, dict) else None
+        overall = risk_scores.get("overall_risk") if isinstance(risk_scores, dict) else None
+        if isinstance(total, int) or isinstance(overall, int):
+            return f"Anomaly analysis found {total or 0} issue(s) with overall risk score {overall or 0}."
+
+    return None
+
+
 def _record_tool_metrics(trace: RuntimeTrace, payload: Any) -> None:
     data = _to_mapping(payload)
     if not data:
@@ -244,7 +278,8 @@ def _record_tool_metrics(trace: RuntimeTrace, payload: Any) -> None:
 
 
 def _extract_root_conclusion(trace: RuntimeTrace) -> None:
-    for text in reversed(trace.final_text_parts):
+    candidates = list(reversed(trace.final_text_parts)) + list(reversed(trace.all_text_parts))
+    for text in candidates:
         parsed = _parse_json_text(text)
         if not parsed:
             continue
@@ -252,10 +287,37 @@ def _extract_root_conclusion(trace: RuntimeTrace) -> None:
         next_steps = parsed.get("recommended_next_steps")
         if isinstance(final_summary, str) and final_summary.strip():
             trace.root_final_summary = final_summary.strip()
+        if not trace.root_final_summary:
+            derived = _derived_summary_from_payload(parsed)
+            if derived:
+                trace.root_final_summary = derived
         if isinstance(next_steps, list):
             trace.root_next_steps = [str(step) for step in next_steps if str(step).strip()]
         if trace.root_final_summary or trace.root_next_steps:
             return
+
+
+def _derived_conclusion_from_trace(trace: RuntimeTrace) -> str:
+    health = "unknown"
+    if trace.highest_risk_score is not None:
+        if trace.highest_risk_score >= 70:
+            health = "critical"
+        elif trace.highest_risk_score >= 35:
+            health = "degraded"
+        else:
+            health = "stable"
+
+    anomaly_count = trace.anomaly_findings if trace.anomaly_findings is not None else 0
+    vuln_count = trace.vulnerability_findings if trace.vulnerability_findings is not None else 0
+    assets = trace.discovered_assets if trace.discovered_assets is not None else "unknown"
+    risk = trace.highest_risk_score if trace.highest_risk_score is not None else "unknown"
+    gaps = len(trace.missing_tools)
+
+    return (
+        f"Derived system state is {health}; discovered_assets={assets}; "
+        f"anomaly_findings={anomaly_count}; vulnerability_findings={vuln_count}; "
+        f"overall_risk={risk}; missing_tool_count={gaps}."
+    )
 
 
 def _print_conclusion(trace: RuntimeTrace) -> None:
@@ -277,21 +339,10 @@ def _print_conclusion(trace: RuntimeTrace) -> None:
     if trace.missing_tools:
         summary_rows.append(("Missing Tools", ", ".join(sorted(trace.missing_tools))))
 
-    if trace.root_final_summary:
-        summary_rows.append(("Conclusion", trace.root_final_summary))
-    else:
-        summary_rows.append(
-            ("Conclusion", "No final text summary returned; fallback conclusion generated from tool responses.")
-        )
+    if not trace.root_final_summary:
+        trace.root_final_summary = _derived_conclusion_from_trace(trace)
+    summary_rows.append(("Conclusion", trace.root_final_summary))
     _print_panel("Conclusion Report", summary_rows, Ansi.GREEN)
-
-    next_steps = trace.root_next_steps or [
-        "Review missing scanner tools and install those relevant to each server profile.",
-        "Validate high-risk findings and exposed sensitive ports first.",
-        "Re-run with ADK_PROMPT scoped to a specific service group for deeper diagnostics.",
-    ]
-    next_step_rows = [(f"Step {index}", step) for index, step in enumerate(next_steps, start=1)]
-    _print_panel("Recommended Next Steps", next_step_rows, Ansi.CYAN)
 
     if trace.warnings:
         warning_rows = [(f"Warning {index}", warning) for index, warning in enumerate(trace.warnings[:6], start=1)]
@@ -341,8 +392,8 @@ async def demo() -> None:
         pass
 
     prompt = (
-        env_value("ADK_PROMPT", "Run a quick health check and summarize any risks.")
-        or "Run a quick health check and summarize any risks."
+        env_value("ADK_PROMPT", "Run a quick health and security check and summarize any risks.")
+        or "Run a quick health and security check and summarize any risks."
     )
     user_message = Content(role="user", parts=[Part(text=prompt)])
     trace = RuntimeTrace()
@@ -380,6 +431,9 @@ async def demo() -> None:
                 trace.total_steps += 1
                 trace.text_messages += 1
                 clean_text = text.strip()
+                trace.all_text_parts.append(clean_text)
+                if len(trace.all_text_parts) > 24:
+                    trace.all_text_parts = trace.all_text_parts[-24:]
                 if event.is_final_response():
                     trace.final_text_parts.append(clean_text)
 
