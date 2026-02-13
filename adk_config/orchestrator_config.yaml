@@ -1,3 +1,0 @@
-# Placeholder orchestration settings for ADK-based execution.
-max_agents: 64
-message_timeout_seconds: 30

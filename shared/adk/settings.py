@@ -7,4 +7,4 @@ def default_model() -> str:
 
 
 def app_name() -> str:
-    return env_value("ADK_APP_NAME", "autonomous-secops-platform") or "autonomous-secops-platform"
+    return env_value("ADK_APP_NAME", "0VERW4TCH") or "0VERW4TCH"

@@ -1,22 +1,47 @@
+Metadata-Version: 2.4
+Name: 0VRW4TCH
+Version: 0.1.0
+Summary: Autonomous multi-agent security and operations platform
+License-Expression: Apache-2.0
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+Requires-Dist: greenlet>=3.3.1
+Requires-Dist: google-adk>=0.1.0
+Requires-Dist: pydantic>=2.0.0
+Requires-Dist: python-dotenv>=1.0.0
+Requires-Dist: litellm>=1.0.0
+Requires-Dist: requests>=2.31.0
+Requires-Dist: termcolor>=2.4.0
+Requires-Dist: fastapi>=0.110
+Requires-Dist: aiosqlite>=0.20
+Requires-Dist: asyncpg>=0.29
+Requires-Dist: google-adk
+Requires-Dist: httpx>=0.26
+Requires-Dist: kafka-python>=2.0
+Requires-Dist: neo4j>=5.19
+Requires-Dist: opentelemetry-api>=1.23
+Requires-Dist: opentelemetry-sdk>=1.23
+Requires-Dist: prometheus-client>=0.20
+Requires-Dist: psycopg[binary]>=3.1
+Requires-Dist: pydantic>=2.6
+Requires-Dist: python-dotenv>=1.0
+Requires-Dist: pytest>=7.4
+Requires-Dist: pyyaml>=6.0
+Requires-Dist: redis>=5.0
+Requires-Dist: requests>=2.31
+Requires-Dist: ruff>=0.4
+Requires-Dist: uvicorn[standard]>=0.27
+Requires-Dist: dotenv>=0.9.9
+
 # Autonomous Multi-Agent Security & Operations Platform
 
 This repository scaffolds a multi-agent security monitoring and operations platform built around a layered agent ecosystem and a control plane for governance and oversight. It is implemented on top of Google ADK.
 
 ## What is implemented now
-- Focused ADK-based monitoring stack for asset discovery, system health, anomaly detection, and vulnerability checks
+- Full project layout with ADK-based agents across all layers
 - Shared models, tools, and utilities with minimal working stubs
 - ADK Runner orchestration with session handling
 - Configuration and policy scaffolding
-
-## Active agents (current focus)
-- `scope_scanner`: discovers in-scope assets/services and monitoring targets
-- `system_health`: evaluates runtime health and monitoring/security coverage
-- `anomaly_detector`: scores anomalies and surfaces evidence-backed findings
-- `vulnerability_assessor`: runs targeted security scan checks for discovered risk areas
-
-## Optional Tooling Behavior
-- Discovery and security scans are best-effort: missing tools (for example `kubectl`, `aws`, `gcloud`, `az`, `falco`, `osqueryi`, `trivy`, `nmap`) do not fail execution.
-- The platform returns partial results with explicit `missing_tools`, `warnings`, and source status fields so you can operate across heterogeneous servers.
 
 ## Quick start (local)
 1. Create a virtual environment and install dependencies.
@@ -97,11 +122,3 @@ export METRICS_BEARER_TOKEN="your-token-if-needed"
 - Agent definitions and instructions are Python-only under `agents/` (no YAML mirror).
 - Extend each agent’s tools to integrate real data sources and actions.
 - Output contracts are defined in `0VRW4TCH/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.
-
-
-
-
-To Run - 
-
-export ZAI_API_KEY="your_key"
-python3 -m tests.integration.runner --scenario container_escape
