@@ -1,107 +1,177 @@
-# Autonomous Multi-Agent Security & Operations Platform
+# 0VRW4TCH — Autonomous Multi-Agent SecOps Platform
 
-This repository scaffolds a multi-agent security monitoring and operations platform built around a layered agent ecosystem and a control plane for governance and oversight. It is implemented on top of Google ADK.
+An autonomous security operations platform built on [Google ADK](https://github.com/google/adk-python). A deterministic pipeline of specialized AI agents performs asset discovery, health checks, anomaly detection, vulnerability assessment, and automated remediation — end-to-end, in a single run.
 
-## What is implemented now
-- Focused ADK-based monitoring stack for asset discovery, system health, anomaly detection, and vulnerability checks
-- Shared models, tools, and utilities with minimal working stubs
-- ADK Runner orchestration with session handling
-- Configuration and policy scaffolding
+## Architecture
 
-## Active agents (current focus)
-- `scope_scanner`: discovers in-scope assets/services and monitoring targets
-- `system_health`: evaluates runtime health and monitoring/security coverage
-- `anomaly_detector`: scores anomalies and surfaces evidence-backed findings
-- `vulnerability_assessor`: runs targeted security scan checks for discovered risk areas
-
-## Optional Tooling Behavior
-- Discovery and security scans are best-effort: missing tools (for example `kubectl`, `aws`, `gcloud`, `az`, `falco`, `osqueryi`, `trivy`, `nmap`) do not fail execution.
-- The platform returns partial results with explicit `missing_tools`, `warnings`, and source status fields so you can operate across heterogeneous servers.
-
-## Quick start (local)
-1. Create a virtual environment and install dependencies.
-2. Set your Gemini API key (ADK uses Gemini by default).
-3. Run the sample orchestrator demo.
-
-Example:
-```bash
-python -m venv .venv
-. .venv/bin/activate
-python -m pip install -r requirements.txt
-python -m secops_platform.orchestrator.orchestrator
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                      secops_pipeline                             │
+│                    (SequentialAgent)                             │
+│                                                                  │
+│  ┌─ Stage 1: Perception (Parallel) ──────────────────────────┐   │
+│  │  scope_scanner  ∥  system_health                          │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                          ↓                                       │
+│  ┌─ Stage 2: Analysis (Parallel) ────────────────────────────┐   │
+│  │  anomaly_detector  ∥  vulnerability_assessor              │   │
+│  └───────────────────────────────────────────────────────────┘   │
+│                          ↓                                       │
+│  ┌─ Stage 3: Decision ───────────────────────────────────────┐   │
+│  │  security_magistrate                                      │   │
+│  │    ├── thought (chain-of-thought reasoning)               │   │
+│  │    └── security_enforcer (remediation actions)            │   │
+│  └───────────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-Configure variables in `/Users/nishant/Projects/0VRW4TCH/.env` before running.
-Use `not_available` (or `none`) for values not present on a given server.
+### Pipeline Stages
 
-## Session storage
-By default, the orchestrator uses ADK's `DatabaseSessionService` with a local SQLite file at `./data/adk_sessions.db`.
-Set `ADK_SESSION_DB_URL` to use a different backend (for example PostgreSQL with an async driver), or set
-`ADK_SESSION_DB_PATH` to change the default SQLite file path.
+| Stage | Agent | Purpose |
+|---|---|---|
+| **Perception** | `scope_scanner` | Discovers in-scope assets, services, and monitoring targets |
+| | `system_health` | Evaluates runtime health, metrics, and security coverage |
+| **Analysis** | `anomaly_detector` | Scores anomalies and surfaces evidence-backed findings |
+| | `vulnerability_assessor` | Runs targeted security checks for discovered risk areas |
+| **Decision** | `security_magistrate` | Produces a verdict with severity assessment and action plan |
+| | `thought` | Chain-of-thought reasoning sub-agent |
+| | `security_enforcer` | Executes remediation actions (with human confirmation for high-risk ops) |
 
-Examples:
+### Observability & Safety
+
+- **Rich terminal UI** — CTF-agent-style panels with step counters, timing, nested output, and token metrics
+- **Audit plugin** — structured JSONL audit trail at `data/audit/audit.jsonl` logging every agent lifecycle event and tool invocation
+- **Guardrails** — blocked shell commands, prompt injection detection, and human-confirmation gates for dangerous operations (configured in `config/policies/guardrails.yaml`)
+
+## Quick Start
+
+### Prerequisites
+- Python ≥ 3.11
+- [uv](https://docs.astral.sh/uv/) package manager
+
+### Setup
+
 ```bash
-export ADK_SESSION_DB_URL=\"sqlite+aiosqlite:///./data/adk_sessions.db\"
-export ADK_SESSION_DB_URL=\"postgresql+asyncpg://secops:secops@localhost:5432/secops\"
+git clone <repo-url> && cd 0VRW4TCH
+cp .env.example .env       # edit with your API keys
+uv venv
+uv sync
 ```
 
-## Memory (long-term recall)
-ADK memory is separate from session state. By default we use an in-memory memory service for local development.
-To persist memory across runs, use Vertex AI Memory Bank and set the required environment variables.
+### Run
 
-Examples:
 ```bash
-export ADK_MEMORY_BACKEND=\"in_memory\"
-
-export ADK_MEMORY_BACKEND=\"vertex\"
-export GOOGLE_CLOUD_PROJECT=\"your-gcp-project\"
-export GOOGLE_CLOUD_LOCATION=\"us-central1\"
-export ADK_AGENT_ENGINE_ID=\"your-agent-engine-id\"
+uv run --project ./ -m secops_platform.orchestrator.orchestrator
 ```
 
-Set `ADK_PRELOAD_MEMORY=true` to preload memories into the context automatically.
+### Run Integration Tests
 
-## Live Metrics Backend
-`system_health` can query Prometheus or VictoriaMetrics generically. Set one of:
-- `METRICS_BACKEND_URL`
-- `PROMETHEUS_URL`
-- `VICTORIAMETRICS_URL`
-
-Optional auth:
-- `METRICS_BEARER_TOKEN`
-
-Optional per-metric query overrides:
-- `METRIC_QUERY_CPU_USAGE_PERCENT`
-- `METRIC_QUERY_MEMORY_USAGE_PERCENT`
-- `METRIC_QUERY_DISK_USAGE_PERCENT`
-- `METRIC_QUERY_NETWORK_IO_MBPS`
-- `METRIC_QUERY_REQUEST_P95_MS`
-- `METRIC_QUERY_ERROR_RATE_PERCENT`
-
-Example:
 ```bash
-export METRICS_BACKEND_URL="http://your-prometheus:9090"
-export METRICS_BEARER_TOKEN="your-token-if-needed"
+# All tests
+uv run --project ./ -m pytest tests/ -q
+
+# Single scenario
+uv run --project ./ -m tests.integration.runner --scenario container_escape
 ```
 
-## Structure
-- `agents/`: Agent implementations organized by layer
-- `shared/`: Shared models, tools, and utilities
-- `secops_platform/`: Non-ADK services (orchestrator, API, security)
-- `config/`: Environment settings and policy files
-- `deployment/`: Kubernetes, Helm, Terraform, Docker
-- `docs/`: Architecture and integration docs
+## Configuration
+
+All runtime config is read from environment variables (see `.env.example`).
+
+### Model Provider
+
+```bash
+# Google Gemini (default)
+MODEL_PROVIDER=gemini
+DEFAULT_MODEL=gemini-2.5-flash-lite
+
+# Z.AI (GLM via LiteLLM)
+MODEL_PROVIDER=zai
+DEFAULT_MODEL=zai/glm-4.5
+ZAI_API_KEY=your_key
+```
+
+Per-agent overrides: `MODEL_SCOPE_SCANNER`, `MODEL_MAGISTRATE`, etc.
+
+### Session Storage
+
+SQLite by default at `./data/adk_sessions.db`. Override with:
+
+```bash
+ADK_SESSION_DB_URL="postgresql+asyncpg://user:pass@localhost:5432/secops"
+```
+
+### Memory (Long-term Recall)
+
+```bash
+ADK_MEMORY_BACKEND=in_memory        # default, local dev
+ADK_MEMORY_BACKEND=vertex           # persistent, requires GCP
+```
+
+### Live Metrics
+
+Connect to Prometheus or VictoriaMetrics for real system metrics:
+
+```bash
+METRICS_BACKEND_URL="http://your-prometheus:9090"
+METRICS_BEARER_TOKEN="your-token-if-needed"
+```
+
+## Project Structure
+
+```
+agents/
+├── stages.py                    # Pipeline definition (SequentialAgent → Parallel → Decision)
+├── perception/
+│   ├── scope_scanner/           # Asset discovery
+│   └── system_health/           # Runtime health checks
+├── analysis/
+│   ├── anomaly_detector/        # Anomaly scoring
+│   ├── vulnerability_assessor/  # Security scans
+│   └── thought_agent/           # Chain-of-thought reasoning
+├── decision/
+│   └── security_magistrate/     # Verdict + severity + action plan
+└── action/
+    └── security_enforcer/       # Remediation execution
+
+config/
+├── settings.py                  # Runtime config (models, providers)
+├── constants.py                 # Domain constants (severity weights, attack types)
+└── policies/
+    └── guardrails.yaml          # Blocked commands, confirmation gates, injection patterns
+
+shared/
+├── adk/
+│   ├── observability.py         # Rich terminal UI callbacks (timing, tokens, nested panels)
+│   └── audit_plugin.py          # JSONL audit trail plugin
+├── security/
+│   ├── policy_loader.py         # YAML policy file loader
+│   └── mock_signals.py          # Mock threat signals for testing
+├── security_tools/              # Shared tool implementations (code exec, SSH, Linux commands)
+├── tools/                       # Common tools (discovery, metrics, security scans)
+├── models/                      # Pydantic models and output contracts
+└── utils/
+    ├── terminal_ui.py           # ANSI panel renderer (compact, rich, nested)
+    └── env.py                   # Environment variable helpers
+
+secops_platform/
+└── orchestrator/
+    ├── orchestrator.py          # Entry point (~65 lines)
+    ├── runner_factory.py        # ADK Runner/Session/Memory wiring
+    └── cli.py                   # Startup banner + conclusion report
+
+tests/
+├── unit/                        # Pipeline structure, guardrails, audit plugin tests
+└── integration/                 # Attack scenario tests (ransomware, cryptomining, etc.)
+```
+
+## Optional Tool Behavior
+
+Discovery and security scans are best-effort. Missing tools (`kubectl`, `falco`, `trivy`, `nmap`, etc.) do not fail execution — the platform returns partial results with explicit `missing_tools` and `warnings` fields so it works across heterogeneous environments.
 
 ## Notes
-- Set `ADK_MODEL` to override the default model (`gemini-2.5-flash-lite`).
-- Agent definitions and instructions are Python-only under `agents/` (no YAML mirror).
-- Extend each agent’s tools to integrate real data sources and actions.
-- Output contracts are defined in `0VRW4TCH/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.
 
-
-
-
-To Run - 
-
-export ZAI_API_KEY="your_key"
-python3 -m tests.integration.runner --scenario container_escape
+- Agent definitions are Python-only under `agents/` (no YAML mirror)
+- All pipeline results are read from ADK session state, not scraped from tool responses
+- High-risk enforcer tools require human confirmation before execution
+- Set `ADK_AOP_UI=false` to disable the rich observability output
