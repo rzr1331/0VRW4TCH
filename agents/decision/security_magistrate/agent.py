@@ -15,9 +15,9 @@ Sub-agents:
 
 from google.adk.agents import Agent
 
-from config.security_config import get_model_for_agent
+from config.settings import get_model_for_agent
 from agents.decision.security_magistrate.prompts import MAGISTRATE_INSTRUCTION, MAGISTRATE_DESCRIPTION
-from agents.decision.security_magistrate.tools import (
+from agents.decision.security_magistrate.tools_gemini_compat import (
     analyze_threat_signals,
     assess_severity,
     classify_attack_type,

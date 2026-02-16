@@ -8,7 +8,7 @@ Usage:
     The plugin is registered with the Runner at startup::
 
         from shared.adk.audit_plugin import SecurityAuditPlugin
-        runner = Runner(agent=root_agent, plugins=[SecurityAuditPlugin()])
+        runner = Runner(agent=secops_pipeline, plugins=[SecurityAuditPlugin()])
 """
 from __future__ import annotations
 

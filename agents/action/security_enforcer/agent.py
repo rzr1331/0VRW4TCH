@@ -15,7 +15,7 @@ to gate destructive actions behind human approval.
 from google.adk.agents import Agent
 from google.adk.tools import FunctionTool
 
-from config.security_config import get_model_for_agent
+from config.settings import get_model_for_agent
 from agents.action.security_enforcer.prompts import ACTION_KAMEN_INSTRUCTION, ACTION_KAMEN_DESCRIPTION
 
 # =============================================================================

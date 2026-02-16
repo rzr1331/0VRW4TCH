@@ -168,7 +168,7 @@ async def run_scenario(test: ScenarioTest, verbose: bool = True) -> ScenarioResu
     from google.adk.runners import Runner
     from google.adk.sessions import InMemorySessionService
     from google.genai import types
-    from agents.root_agent import root_agent
+    from agents.stages import secops_pipeline
     
     scenario = test.scenario
     start_time = datetime.now()
@@ -183,7 +183,7 @@ async def run_scenario(test: ScenarioTest, verbose: bool = True) -> ScenarioResu
         # Create session service and runner
         session_service = InMemorySessionService()
         runner = Runner(
-            agent=root_agent,
+            agent=secops_pipeline,
             app_name="security_agents_test",
             session_service=session_service,
         )

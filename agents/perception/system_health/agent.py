@@ -7,7 +7,7 @@ from shared.adk.observability import (
     before_tool_callback,
     on_tool_error_callback,
 )
-from shared.adk.settings import default_model
+from config.settings import get_model_for_agent
 from .prompts import DESCRIPTION, INSTRUCTION
 from .tools import TOOLS
 
@@ -15,7 +15,7 @@ from .tools import TOOLS
 agent = Agent(
     name='system_health',
     description=DESCRIPTION,
-    model=default_model(),
+    model=get_model_for_agent("system_health"),
     instruction=INSTRUCTION,
     tools=TOOLS,
     output_key="perception_health",

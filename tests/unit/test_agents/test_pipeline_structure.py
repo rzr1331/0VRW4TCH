@@ -8,9 +8,9 @@ from google.adk.agents import SequentialAgent, ParallelAgent, LlmAgent
 
 
 def _load_pipeline():
-    """Import the root agent (may be slow due to model init, so isolate it)."""
-    from agents import root_agent
-    return root_agent
+    """Import the pipeline (may be slow due to model init, so isolate it)."""
+    from agents.stages import secops_pipeline
+    return secops_pipeline
 
 
 class TestPipelineStructure:

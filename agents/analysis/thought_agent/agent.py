@@ -10,7 +10,7 @@ The Magistrate delegates to it when facing ambiguous or complex cases.
 
 from google.adk.agents import Agent
 
-from config.security_config import get_model_for_agent
+from config.settings import get_model_for_agent
 from agents.analysis.thought_agent.prompts import THOUGHT_INSTRUCTION, THOUGHT_DESCRIPTION
 
 

@@ -11,12 +11,8 @@ import time
 import json
 from typing import List, Dict, Any, Optional
 
-from config.security_config import (
-    MOCK_MODE,
-    MOCK_DELAY_SECONDS,
-    SEVERITY_WEIGHTS,
-    ATTACK_TYPE_DEFAULT_SEVERITY,
-)
+from config.settings import MOCK_MODE, MOCK_DELAY_SECONDS
+from config.constants import SEVERITY_WEIGHTS, ATTACK_TYPE_DEFAULT_SEVERITY
 from shared.security.models import SeverityLevel, AttackType
 
 
