@@ -97,3 +97,11 @@ export METRICS_BEARER_TOKEN="your-token-if-needed"
 - Agent definitions and instructions are Python-only under `agents/` (no YAML mirror).
 - Extend each agent’s tools to integrate real data sources and actions.
 - Output contracts are defined in `0VRW4TCH/shared/models/contracts.py` and used by root/system-health prompts for standardized JSON responses.
+
+
+
+
+To Run - 
+
+export ZAI_API_KEY="your_key"
+python3 -m tests.integration.runner --scenario container_escape

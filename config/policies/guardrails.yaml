@@ -1,3 +1,42 @@
 guardrails:
-  - id: human-approval-required
-    description: Require human approval for destructive actions
+  # Tools that require human confirmation before execution
+  require_confirmation:
+    - terminate_process
+    - isolate_system
+    - execute_command
+    - generic_linux_command
+    - execute_code
+    - run_ssh_command_with_credentials
+
+  # Shell command patterns that are always blocked
+  blocked_commands:
+    - "rm -rf /"
+    - "mkfs"
+    - ":(){ :|:&};:"        # Fork bomb
+    - "dd if=/dev/"          # Raw disk writes
+    - "> /dev/sda"
+    - "chmod -R 777 /"
+    - "shutdown"
+    - "reboot"
+    - "init 0"
+    - "halt"
+
+  # Per-tool timeout limits (seconds)
+  max_timeout_seconds:
+    execute_command: 60
+    generic_linux_command: 100
+    execute_code: 120
+    run_ssh_command_with_credentials: 60
+
+  # Maximum severity level that can be auto-remediated without confirmation
+  auto_remediate_max_severity: medium
+
+  # Prompt injection patterns to screen for
+  prompt_injection_patterns:
+    - "ignore previous instructions"
+    - "ignore all prior"
+    - "disregard your system prompt"
+    - "you are now"
+    - "new persona"
+    - "jailbreak"
+    - "DAN mode"
