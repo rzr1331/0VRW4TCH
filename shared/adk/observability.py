@@ -8,6 +8,7 @@ import threading
 from typing import Any
 
 from shared.utils.env import env_value
+from shared.security.policy_loader import get_blocked_commands, get_prompt_injection_patterns
 
 
 class Ansi:
@@ -210,12 +211,43 @@ def _extract_model_message(llm_response: Any) -> tuple[str, list[str], str]:
     return summary, function_calls[:10], raw
 
 
+def _check_blocked_commands(args: dict[str, Any] | None) -> str | None:
+    """Return a reason string if any arg value contains a blocked pattern."""
+    if not args:
+        return None
+    blocked = get_blocked_commands()
+    for _key, val in args.items():
+        if not isinstance(val, str):
+            continue
+        for pattern in blocked:
+            if pattern in val:
+                return f"Blocked by guardrail policy: command contains '{pattern}'"
+    return None
+
+
 def before_tool_callback(
     tool: Any = None,
     args: dict[str, Any] | None = None,
     tool_context: Any = None,
     **_: Any,
 ) -> dict | None:
+    # ---- Guardrail: blocked command patterns ----
+    block_reason = _check_blocked_commands(args)
+    if block_reason:
+        step = _next_step()
+        _print_panel(
+            "GUARDRAIL BLOCKED",
+            [
+                ("Step", f"{step:03d}"),
+                ("Agent", _agent_name_from_tool_context(tool_context)),
+                ("Tool", _tool_name(tool)),
+                ("Reason", block_reason),
+            ],
+            Ansi.RED,
+        )
+        return {"error": block_reason, "blocked": True}
+
+    # ---- AOP console logging (original behavior) ----
     if not _aop_enabled():
         return None
     step = _next_step()
@@ -280,6 +312,55 @@ def on_tool_error_callback(
         ],
         Ansi.RED,
     )
+    return None
+
+
+def before_model_callback(callback_context: Any, llm_request: Any) -> Any:
+    """Screen prompts for injection patterns before sending to the model."""
+    injection_patterns = get_prompt_injection_patterns()
+    if not injection_patterns:
+        return None
+
+    # Extract text from the request to scan
+    text_to_scan = ""
+    data = _to_mapping(llm_request)
+    if data and isinstance(data, dict):
+        contents = data.get("contents", [])
+        if isinstance(contents, list):
+            for content in contents:
+                if isinstance(content, dict):
+                    parts = content.get("parts", [])
+                    if isinstance(parts, list):
+                        for part in parts:
+                            if isinstance(part, dict):
+                                text = part.get("text", "")
+                                if isinstance(text, str):
+                                    text_to_scan += text.lower() + " "
+
+    for pattern in injection_patterns:
+        if pattern.lower() in text_to_scan:
+            step = _next_step()
+            _print_panel(
+                "GUARDRAIL: PROMPT INJECTION DETECTED",
+                [
+                    ("Step", f"{step:03d}"),
+                    ("Agent", _agent_name_from_callback_context(callback_context)),
+                    ("Pattern", pattern),
+                ],
+                Ansi.RED,
+            )
+            # Return a safe fallback response to prevent the injection
+            from google.genai import types as genai_types
+            return genai_types.GenerateContentResponse(
+                candidates=[
+                    genai_types.Candidate(
+                        content=genai_types.Content(
+                            parts=[genai_types.Part(text="Request blocked: potential prompt injection detected.")],
+                            role="model",
+                        )
+                    )
+                ]
+            )
     return None
 
 

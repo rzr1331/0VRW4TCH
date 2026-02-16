@@ -8,6 +8,9 @@ This repository now uses Google ADK as the primary runtime. The focus is on alig
 - Tool calls are standard ADK tools with policy checks in the tool wrappers
 - Session state should be used for traceable incident context
 
+## Reference knowledge base
+- Cross-thread ADK concept and links reference: `docs/adk_integration/adk_docs_knowledge_base.md`
+
 ## Next steps
 - Introduce persistent session storage (PostgreSQL or Redis)
 - Configure Vertex AI Memory Bank for persistent long-term recall

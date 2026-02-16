@@ -18,6 +18,7 @@ agent = Agent(
     model=default_model(),
     instruction=INSTRUCTION,
     tools=TOOLS,
+    output_key="perception_health",
     before_tool_callback=before_tool_callback,
     after_tool_callback=after_tool_callback,
     on_tool_error_callback=on_tool_error_callback,
