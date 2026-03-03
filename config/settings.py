@@ -34,6 +34,7 @@ AGENT_MODELS: dict[str, str] = {
     "system_health": os.getenv("MODEL_SYSTEM_HEALTH", DEFAULT_MODEL),
     "anomaly_detector": os.getenv("MODEL_ANOMALY_DETECTOR", DEFAULT_MODEL),
     "vulnerability_assessor": os.getenv("MODEL_VULNERABILITY_ASSESSOR", DEFAULT_MODEL),
+    "network_monitor": os.getenv("MODEL_NETWORK_MONITOR", DEFAULT_MODEL),
     "magistrate": os.getenv("MODEL_MAGISTRATE", DEFAULT_MODEL),
     "thought": os.getenv("MODEL_THOUGHT", DEFAULT_MODEL),
     "action_kamen": os.getenv("MODEL_ACTION_KAMEN", DEFAULT_MODEL),

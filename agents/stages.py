@@ -6,7 +6,7 @@ replaces the old LLM-delegated root agent.
 
 Pipeline order:
   1. perception_stage  (ParallelAgent: scope_scanner ∥ system_health)
-  2. analysis_stage    (ParallelAgent: anomaly_detector ∥ vulnerability_assessor)
+  2. analysis_stage    (ParallelAgent: anomaly_detector ∥ vulnerability_assessor ∥ network_monitor)
   3. security_magistrate (Agent: decision + delegation to thought/enforcer)
 """
 from __future__ import annotations
@@ -21,6 +21,7 @@ from agents.perception.system_health.agent import agent as system_health_agent
 # ----- Analysis layer agents -----
 from agents.analysis.anomaly_detector.agent import agent as anomaly_detector_agent
 from agents.analysis.vulnerability_assessor.agent import agent as vulnerability_assessor_agent
+from agents.analysis.network_monitor.agent import agent as network_monitor_agent
 
 # ----- Decision layer -----
 from agents.decision.security_magistrate.agent import magistrate_agent
@@ -34,6 +35,7 @@ PIPELINE_STATE_DEFAULTS: dict[str, str] = {
     "perception_health": "(not yet available)",
     "analysis_anomalies": "(not yet available)",
     "analysis_vulnerabilities": "(not yet available)",
+    "analysis_network": "(not yet available)",
     "decision_verdict": "",
     "enforcement_result": "",
 }
@@ -62,7 +64,7 @@ perception_stage = ParallelAgent(
 # =============================================================================
 analysis_stage = ParallelAgent(
     name="analysis_stage",
-    sub_agents=[anomaly_detector_agent, vulnerability_assessor_agent],
+    sub_agents=[anomaly_detector_agent, vulnerability_assessor_agent, network_monitor_agent],
 )
 
 # =============================================================================

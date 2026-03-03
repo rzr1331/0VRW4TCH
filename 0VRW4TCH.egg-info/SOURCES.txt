@@ -6,7 +6,7 @@ pyproject.toml
 0VRW4TCH.egg-info/requires.txt
 0VRW4TCH.egg-info/top_level.txt
 agents/__init__.py
-agents/root_agent.py
+agents/stages.py
 agents/action/security_enforcer/__init__.py
 agents/action/security_enforcer/agent.py
 agents/action/security_enforcer/prompts.py
@@ -16,6 +16,11 @@ agents/analysis/anomaly_detector/agent.py
 agents/analysis/anomaly_detector/models.py
 agents/analysis/anomaly_detector/prompts.py
 agents/analysis/anomaly_detector/tools.py
+agents/analysis/network_monitor/__init__.py
+agents/analysis/network_monitor/agent.py
+agents/analysis/network_monitor/models.py
+agents/analysis/network_monitor/prompts.py
+agents/analysis/network_monitor/tools.py
 agents/analysis/thought_agent/__init__.py
 agents/analysis/thought_agent/agent.py
 agents/analysis/thought_agent/prompts.py
@@ -26,6 +31,7 @@ agents/decision/security_magistrate/__init__.py
 agents/decision/security_magistrate/agent.py
 agents/decision/security_magistrate/prompts.py
 agents/decision/security_magistrate/tools.py
+agents/decision/security_magistrate/tools_gemini_compat.py
 agents/perception/__init__.py
 agents/perception/scope_scanner/agent.py
 agents/perception/scope_scanner/prompts.py
@@ -38,8 +44,10 @@ secops_platform/__init__.py
 secops_platform/api/__init__.py
 secops_platform/api/main.py
 secops_platform/orchestrator/__init__.py
+secops_platform/orchestrator/cli.py
 secops_platform/orchestrator/health_monitor.py
 secops_platform/orchestrator/orchestrator.py
+secops_platform/orchestrator/runner_factory.py
 secops_platform/orchestrator/scheduler.py
 secops_platform/security/__init__.py
 secops_platform/security/audit_logger.py
@@ -47,9 +55,9 @@ secops_platform/security/auth_service.py
 secops_platform/security/vault_client.py
 shared/__init__.py
 shared/adk/__init__.py
+shared/adk/audit_plugin.py
 shared/adk/memory.py
 shared/adk/observability.py
-shared/adk/settings.py
 shared/agents/__init__.py
 shared/database/__init__.py
 shared/database/cache_store.py
@@ -66,6 +74,7 @@ shared/models/vulnerability.py
 shared/security/__init__.py
 shared/security/mock_signals.py
 shared/security/models.py
+shared/security/policy_loader.py
 shared/security_tools/__init__.py
 shared/security_tools/code_executor.py
 shared/security_tools/common.py
@@ -86,3 +95,4 @@ shared/utils/encryption.py
 shared/utils/env.py
 shared/utils/logging.py
 shared/utils/metrics.py
+shared/utils/terminal_ui.py
