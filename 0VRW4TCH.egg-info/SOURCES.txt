@@ -3,6 +3,7 @@ pyproject.toml
 0VRW4TCH.egg-info/PKG-INFO
 0VRW4TCH.egg-info/SOURCES.txt
 0VRW4TCH.egg-info/dependency_links.txt
+0VRW4TCH.egg-info/entry_points.txt
 0VRW4TCH.egg-info/requires.txt
 0VRW4TCH.egg-info/top_level.txt
 agents/__init__.py
@@ -40,6 +41,13 @@ agents/perception/scope_scanner/tools.py
 agents/perception/system_health/agent.py
 agents/perception/system_health/prompts.py
 agents/perception/system_health/tools.py
+config/constants.py
+config/settings.py
+scripts/__init__.py
+scripts/run_network_monitor.py
+scripts/monitoring/__init__.py
+scripts/monitoring/agent_health_check.py
+scripts/monitoring/system_diagnostics.py
 secops_platform/__init__.py
 secops_platform/api/__init__.py
 secops_platform/api/main.py

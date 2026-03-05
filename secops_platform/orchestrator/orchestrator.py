@@ -63,6 +63,10 @@ async def run() -> None:
     print_conclusion(state, event_count=event_count)
 
 
-if __name__ == "__main__":
+def main() -> None:
     setup_logging()
     asyncio.run(run())
+
+
+if __name__ == "__main__":
+    main()

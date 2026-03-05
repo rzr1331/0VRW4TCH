@@ -1,5 +1,16 @@
-version: "3.9"
 services:
+  network_monitor:
+    build:
+      context: .
+      dockerfile: deployment/docker/Dockerfile.network_monitor
+    env_file: .env
+    # host networking lets the agent see real host connections/interfaces
+    network_mode: host
+    restart: "no"
+    profiles: ["network_monitor"]
+    command: ["python", "-m", "scripts.run_network_monitor"]
+
+
   postgres:
     image: postgres:16
     environment:

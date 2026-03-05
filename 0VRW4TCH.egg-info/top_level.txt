@@ -1,3 +1,5 @@
 agents
+config
+scripts
 secops_platform
 shared
