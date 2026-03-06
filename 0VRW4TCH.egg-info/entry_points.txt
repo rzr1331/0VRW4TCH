@@ -1,5 +1,6 @@
 [console_scripts]
 agent-health-check = scripts.monitoring.agent_health_check:main
-overwatch = secops_platform.orchestrator.orchestrator:main
+overwatch = overwatch_platform.orchestrator.overwatch:main
+overwatch-once = overwatch_platform.orchestrator.orchestrator:main
 run-network-monitor = scripts.run_network_monitor:main
 system-diagnostics = scripts.monitoring.system_diagnostics:main

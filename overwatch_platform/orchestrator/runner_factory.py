@@ -13,6 +13,7 @@ from google.adk.runners import Runner
 from google.adk.sessions import DatabaseSessionService
 
 from agents.stages import secops_pipeline
+from shared.adk.audit_plugin import SecurityAuditPlugin
 from shared.adk.memory import build_memory_service
 from config.settings import app_name
 from shared.utils.env import env_value
@@ -41,6 +42,7 @@ async def create_runner() -> tuple[Runner, DatabaseSessionService]:
         agent=secops_pipeline,
         session_service=session_service,
         memory_service=memory_service,
+        plugins=[SecurityAuditPlugin()],
     )
     return runner, session_service
 

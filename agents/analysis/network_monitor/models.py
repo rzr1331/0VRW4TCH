@@ -21,6 +21,11 @@ _SIGNAL_TYPE_MULTIPLIERS: dict[str, float] = {
     "port_scan": 0.8,
     "large_transfer": 1.0,
     "unusual_connection": 0.9,
+    "dangerous_exposed_port": 1.4,
+    "many_unexpected_listeners": 0.9,
+    "high_inbound_connections": 1.3,
+    "syn_flood": 1.5,
+    "inbound_high_port": 1.3,
 }
 
 

@@ -40,13 +40,14 @@ dependencies = [
 ]
 
 [project.scripts]
-overwatch = "secops_platform.orchestrator.orchestrator:main"
+overwatch = "overwatch_platform.orchestrator.overwatch:main"
+overwatch-once = "overwatch_platform.orchestrator.orchestrator:main"
 run-network-monitor = "scripts.run_network_monitor:main"
 agent-health-check = "scripts.monitoring.agent_health_check:main"
 system-diagnostics = "scripts.monitoring.system_diagnostics:main"
 
 [tool.setuptools.packages.find]
-include = ["agents*", "shared*", "secops_platform*", "scripts*", "config*"]
+include = ["agents*", "shared*", "overwatch_platform*", "scripts*", "config*"]
 exclude = ["tests*", "deployment*", "data*", "docs*"]
 
 [tool.pytest.ini_options]

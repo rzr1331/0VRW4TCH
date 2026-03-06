@@ -19,12 +19,12 @@ load_dotenv(ROOT_DIR / ".env")
 
 from config.settings import app_name
 from shared.utils.logging import setup_logging
-from secops_platform.orchestrator.runner_factory import (
+from overwatch_platform.orchestrator.runner_factory import (
     create_runner,
     ensure_session,
     get_user_config,
 )
-from secops_platform.orchestrator.cli import print_config_banner, print_conclusion
+from overwatch_platform.orchestrator.cli import print_config_banner, print_conclusion
 
 
 async def run() -> None:

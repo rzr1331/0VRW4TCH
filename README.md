@@ -178,7 +178,7 @@ shared/
     ├── terminal_ui.py           # ANSI panel renderer (compact, rich, nested)
     └── env.py                   # Environment variable helpers
 
-secops_platform/
+overwatch_platform/
 └── orchestrator/
     ├── orchestrator.py          # Entry point
     ├── runner_factory.py        # ADK Runner/Session/Memory wiring

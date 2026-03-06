@@ -442,7 +442,209 @@ def analyze_arp_table() -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# TOOL 5 — Outbound connection analysis (exfiltration / C2 / abuse)
+# TOOL 5 — Incoming traffic analysis (port scans / exposed services / abuse)
+# ---------------------------------------------------------------------------
+
+# Well-known service ports that are expected to be open on a typical server
+_EXPECTED_LISTEN_PORTS = {22, 80, 443, 8080, 8443}
+
+# Ports that should almost never be exposed externally
+_DANGEROUS_LISTEN_PORTS = {
+    21,     # FTP
+    23,     # Telnet
+    25,     # SMTP (open relay risk)
+    135,    # MS RPC
+    139,    # NetBIOS
+    445,    # SMB
+    1433,   # MSSQL
+    1521,   # Oracle DB
+    3306,   # MySQL
+    3389,   # RDP
+    5432,   # PostgreSQL
+    5900,   # VNC
+    6379,   # Redis
+    9200,   # Elasticsearch
+    11211,  # Memcached
+    27017,  # MongoDB
+}
+
+
+def analyze_incoming_traffic() -> Dict[str, Any]:
+    """Analyze incoming connections and listening services for security risks.
+
+    Detects:
+    1. Unexpectedly exposed / dangerous listening ports
+    2. Inbound connections from external IPs
+    3. Possible port scan indicators (many half-open connections)
+    4. Services bound to 0.0.0.0 / :: (all interfaces) vs localhost
+    """
+    conn_data = monitor_active_connections(max_connections=500)
+    connections = conn_data.get("connections", [])
+    findings: List[Dict[str, Any]] = []
+
+    # --- Listening services analysis ---
+    listeners = [
+        c for c in connections
+        if str(c.get("state", "")).upper() in ("LISTEN", "UNCONN")
+    ]
+
+    exposed_dangerous: List[Dict[str, Any]] = []
+    exposed_unexpected: List[Dict[str, Any]] = []
+    all_listen_ports: List[Dict[str, Any]] = []
+
+    for c in listeners:
+        port = c.get("local_port")
+        addr = str(c.get("local_addr", ""))
+        if not isinstance(port, int):
+            continue
+
+        # Check if bound to all interfaces (externally reachable)
+        bound_all = addr in ("*", "0.0.0.0", "::", "[::]", "")
+        bound_localhost = addr in ("127.0.0.1", "::1", "localhost")
+
+        entry = {
+            "port": port,
+            "local_addr": addr,
+            "process": c.get("process"),
+            "pid": c.get("pid"),
+            "proto": c.get("proto", "tcp"),
+            "bound_all_interfaces": bound_all,
+            "bound_localhost": bound_localhost,
+        }
+        all_listen_ports.append(entry)
+
+        if bound_all and port in _DANGEROUS_LISTEN_PORTS:
+            exposed_dangerous.append(entry)
+        elif bound_all and port not in _EXPECTED_LISTEN_PORTS:
+            exposed_unexpected.append(entry)
+
+    if exposed_dangerous:
+        port_list = [e["port"] for e in exposed_dangerous]
+        findings.append({
+            "signal_type": "dangerous_exposed_port",
+            "severity": "critical",
+            "description": (
+                f"Dangerous service ports exposed on all interfaces: {port_list}. "
+                "These ports are common attack targets."
+            ),
+            "indicators": {
+                "ports": port_list,
+                "services": exposed_dangerous,
+            },
+        })
+
+    if len(exposed_unexpected) > 5:
+        port_list = [e["port"] for e in exposed_unexpected[:15]]
+        findings.append({
+            "signal_type": "many_unexpected_listeners",
+            "severity": "medium",
+            "description": (
+                f"{len(exposed_unexpected)} unexpected ports open on all interfaces: "
+                f"{port_list}"
+            ),
+            "indicators": {
+                "count": len(exposed_unexpected),
+                "ports": port_list,
+            },
+        })
+
+    # --- Inbound connection analysis ---
+    inbound = [
+        c for c in connections
+        if str(c.get("state", "")).upper() in ("ESTABLISHED", "ESTAB")
+        and _is_external(str(c.get("remote_addr", "")))
+        and not _is_external(str(c.get("local_addr", "")))
+    ]
+
+    inbound_ip_counts: Dict[str, int] = {}
+    for c in inbound:
+        ip = str(c.get("remote_addr", ""))
+        inbound_ip_counts[ip] = inbound_ip_counts.get(ip, 0) + 1
+
+    # Flag IPs with many inbound connections
+    for ip, count in inbound_ip_counts.items():
+        if count >= 15:
+            findings.append({
+                "signal_type": "high_inbound_connections",
+                "severity": "high",
+                "description": (
+                    f"External IP {ip} has {count} inbound connections — "
+                    "possible brute force, DDoS, or exploitation attempt."
+                ),
+                "indicators": {"remote_ip": ip, "connection_count": count},
+            })
+
+    # --- Half-open / SYN flood detection ---
+    syn_recv = [
+        c for c in connections
+        if str(c.get("state", "")).upper() in ("SYN_RECV", "SYN-RECEIVED", "SYN_RECEIVED")
+    ]
+
+    if len(syn_recv) > 50:
+        findings.append({
+            "signal_type": "syn_flood",
+            "severity": "critical",
+            "description": (
+                f"Detected {len(syn_recv)} SYN_RECV connections — "
+                "possible SYN flood attack in progress."
+            ),
+            "indicators": {"syn_recv_count": len(syn_recv)},
+        })
+    elif len(syn_recv) > 10:
+        findings.append({
+            "signal_type": "syn_flood",
+            "severity": "high",
+            "description": (
+                f"Elevated SYN_RECV count ({len(syn_recv)}) — "
+                "possible port scan or SYN flood."
+            ),
+            "indicators": {"syn_recv_count": len(syn_recv)},
+        })
+
+    # --- Inbound to high ports (reverse shell indicator) ---
+    for c in inbound:
+        local_port = c.get("local_port")
+        if isinstance(local_port, int) and local_port >= 40000:
+            remote = c.get("remote_addr", "")
+            findings.append({
+                "signal_type": "inbound_high_port",
+                "severity": "high",
+                "description": (
+                    f"Inbound connection from {remote} to high port {local_port} — "
+                    "possible reverse shell or backdoor."
+                ),
+                "indicators": {
+                    "local_port": local_port,
+                    "remote_addr": remote,
+                    "process": c.get("process"),
+                    "pid": c.get("pid"),
+                },
+            })
+
+    threat_score = score_network_threat({
+        "findings": findings,
+        "unique_external_ips": len(inbound_ip_counts),
+    })
+
+    return {
+        "collected_at": datetime.now(UTC).isoformat(),
+        "listening_services": all_listen_ports,
+        "total_listeners": len(all_listen_ports),
+        "dangerous_exposed_ports": exposed_dangerous,
+        "unexpected_exposed_ports": exposed_unexpected[:15],
+        "total_inbound_connections": len(inbound),
+        "unique_inbound_ips": len(inbound_ip_counts),
+        "inbound_ip_distribution": dict(
+            sorted(inbound_ip_counts.items(), key=lambda x: x[1], reverse=True)[:20]
+        ),
+        "syn_recv_count": len(syn_recv),
+        "findings": findings,
+        "threat_score": threat_score,
+    }
+
+
+# ---------------------------------------------------------------------------
+# TOOL 6 — Outbound connection analysis (exfiltration / C2 / abuse)
 # ---------------------------------------------------------------------------
 
 # Known-bad ports commonly used for C2 / IRC / shells
@@ -561,16 +763,22 @@ def assess_network_threats() -> Dict[str, Any]:
     unique_external_ips = outbound.get("unique_external_ips", 0)
     total_outbound = outbound.get("total_outbound", 0)
 
-    # 2. ARP spoofing
+    # 2. Incoming traffic analysis
+    incoming = analyze_incoming_traffic()
+    all_findings.extend(incoming.get("findings", []))
+    total_inbound = incoming.get("total_inbound_connections", 0)
+    unique_inbound_ips = incoming.get("unique_inbound_ips", 0)
+
+    # 3. ARP spoofing
     arp = analyze_arp_table()
     all_findings.extend(arp.get("findings", []))
 
-    # 3. DNS behaviour
+    # 4. DNS behaviour
     dns = analyze_dns_behavior()
     all_findings.extend(dns.get("findings", []))
     unknown_resolvers = dns.get("unknown_resolvers", [])
 
-    # 4. Traffic volume
+    # 5. Traffic volume
     traffic = analyze_traffic_volume()
     high_egress_ifaces = traffic.get("high_egress_interfaces", [])
     total_sent_mb = traffic.get("total_sent_mb", 0.0)
@@ -607,7 +815,12 @@ def assess_network_threats() -> Dict[str, Any]:
         "assessed_at": datetime.now(UTC).isoformat(),
         "network_profile": {
             "total_outbound_connections": total_outbound,
+            "total_inbound_connections": total_inbound,
             "unique_external_ips": unique_external_ips,
+            "unique_inbound_ips": unique_inbound_ips,
+            "listening_services": incoming.get("total_listeners", 0),
+            "dangerous_exposed_ports": [e["port"] for e in incoming.get("dangerous_exposed_ports", [])],
+            "syn_recv_count": incoming.get("syn_recv_count", 0),
             "total_sent_mb": total_sent_mb,
             "arp_entries": arp.get("total_entries", 0),
             "dns_resolvers": dns.get("resolvers", []),
@@ -625,6 +838,7 @@ def assess_network_threats() -> Dict[str, Any]:
 
 TOOLS = [
     assess_network_threats,
+    analyze_incoming_traffic,
     analyze_outbound_connections,
     monitor_active_connections,
     analyze_arp_table,

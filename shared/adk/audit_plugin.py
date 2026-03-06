@@ -61,7 +61,7 @@ class SecurityAuditPlugin(BasePlugin):
 
     # ---- Agent lifecycle ----
 
-    def before_agent_callback(self, *, callback_context: Any = None, **kwargs: Any) -> None:
+    async def before_agent_callback(self, *, callback_context: Any = None, **kwargs: Any) -> None:
         agent_name = _extract_name(
             getattr(callback_context, "agent", callback_context), "unknown_agent"
         )
@@ -71,7 +71,7 @@ class SecurityAuditPlugin(BasePlugin):
             "timestamp": _now_iso(),
         })
 
-    def after_agent_callback(self, *, callback_context: Any = None, **kwargs: Any) -> None:
+    async def after_agent_callback(self, *, callback_context: Any = None, **kwargs: Any) -> None:
         agent_name = _extract_name(
             getattr(callback_context, "agent", callback_context), "unknown_agent"
         )
@@ -83,7 +83,7 @@ class SecurityAuditPlugin(BasePlugin):
 
     # ---- Tool invocations ----
 
-    def before_tool_callback(
+    async def before_tool_callback(
         self,
         *,
         tool: Any = None,
@@ -110,7 +110,7 @@ class SecurityAuditPlugin(BasePlugin):
         })
         return None  # Don't intercept — just log
 
-    def after_tool_callback(
+    async def after_tool_callback(
         self,
         *,
         tool: Any = None,
@@ -143,7 +143,7 @@ class SecurityAuditPlugin(BasePlugin):
         })
         return None
 
-    def on_tool_error_callback(
+    async def on_tool_error_callback(
         self,
         *,
         tool: Any = None,

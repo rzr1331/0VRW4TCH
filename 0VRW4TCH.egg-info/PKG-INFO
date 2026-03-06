@@ -35,7 +35,7 @@ Requires-Dist: dotenv>=0.9.9
 
 # 0VRW4TCH — Autonomous Multi-Agent SecOps Platform
 
-An autonomous security operations platform built on [Google ADK](https://github.com/google/adk-python). A deterministic pipeline of specialized AI agents performs asset discovery, health checks, anomaly detection, vulnerability assessment, and automated remediation — end-to-end, in a single run.
+An autonomous security operations platform built on [Google ADK](https://github.com/google/adk-python). A deterministic pipeline of specialized AI agents performs asset discovery, health checks, anomaly detection, vulnerability assessment, network monitoring, and automated remediation — end-to-end, in a single run.
 
 ## Architecture
 
@@ -50,6 +50,7 @@ An autonomous security operations platform built on [Google ADK](https://github.
 │                          ↓                                       │
 │  ┌─ Stage 2: Analysis (Parallel) ────────────────────────────┐   │
 │  │  anomaly_detector  ∥  vulnerability_assessor              │   │
+│  │  ∥  network_monitor                                       │   │
 │  └───────────────────────────────────────────────────────────┘   │
 │                          ↓                                       │
 │  ┌─ Stage 3: Decision ───────────────────────────────────────┐   │
@@ -62,15 +63,16 @@ An autonomous security operations platform built on [Google ADK](https://github.
 
 ### Pipeline Stages
 
-| Stage | Agent | Purpose |
-|---|---|---|
-| **Perception** | `scope_scanner` | Discovers in-scope assets, services, and monitoring targets |
-| | `system_health` | Evaluates runtime health, metrics, and security coverage |
-| **Analysis** | `anomaly_detector` | Scores anomalies and surfaces evidence-backed findings |
-| | `vulnerability_assessor` | Runs targeted security checks for discovered risk areas |
-| **Decision** | `security_magistrate` | Produces a verdict with severity assessment and action plan |
-| | `thought` | Chain-of-thought reasoning sub-agent |
-| | `security_enforcer` | Executes remediation actions (with human confirmation for high-risk ops) |
+| Stage | Agent | Purpose | Session Key |
+|---|---|---|---|
+| **Perception** | `scope_scanner` | Discovers in-scope assets, services, and monitoring targets | `perception_scope` |
+| | `system_health` | Evaluates runtime health, metrics, and security coverage | `perception_health` |
+| **Analysis** | `anomaly_detector` | Scores anomalies and surfaces evidence-backed findings | `analysis_anomalies` |
+| | `vulnerability_assessor` | Runs targeted security checks for discovered risk areas | `analysis_vulnerabilities` |
+| | `network_monitor` | Monitors connections, DNS, ARP, and traffic for threats | `analysis_network` |
+| **Decision** | `security_magistrate` | Produces a verdict with severity assessment and action plan | `decision_verdict` |
+| | `thought` | Chain-of-thought reasoning sub-agent | — |
+| | `security_enforcer` | Executes remediation actions | `enforcement_result` |
 
 ### Observability & Safety
 
@@ -78,9 +80,12 @@ An autonomous security operations platform built on [Google ADK](https://github.
 - **Audit plugin** — structured JSONL audit trail at `data/audit/audit.jsonl` logging every agent lifecycle event and tool invocation
 - **Guardrails** — blocked shell commands, prompt injection detection, and human-confirmation gates for dangerous operations (configured in `config/policies/guardrails.yaml`)
 
+---
+
 ## Quick Start
 
 ### Prerequisites
+
 - Python ≥ 3.11
 - [uv](https://docs.astral.sh/uv/) package manager
 
@@ -88,26 +93,35 @@ An autonomous security operations platform built on [Google ADK](https://github.
 
 ```bash
 git clone <repo-url> && cd 0VRW4TCH
-cp .env.example .env       # edit with your API keys
-uv venv
+cp .env.example .env       # edit with your API key
 uv sync
 ```
 
-### Run
+### Run the Full Pipeline
 
 ```bash
-uv run --project ./ -m secops_platform.orchestrator.orchestrator
+uv run overwatch
 ```
 
-### Run Integration Tests
+### Run the Network Monitor Only
 
 ```bash
-# All tests
-uv run --project ./ -m pytest tests/ -q
+uv run run-network-monitor
 
-# Single scenario
-uv run --project ./ -m tests.integration.runner --scenario container_escape
+# Custom prompt
+uv run run-network-monitor --prompt "Check for C2 communication and data exfiltration."
 ```
+
+### All Available Commands
+
+| Command | Description |
+|---|---|
+| `uv run overwatch` | Full SecOps pipeline (Perception → Analysis → Decision) |
+| `uv run run-network-monitor` | Network monitor agent standalone |
+| `uv run agent-health-check` | Agent health diagnostics |
+| `uv run system-diagnostics` | System diagnostics |
+
+---
 
 ## Configuration
 
@@ -116,9 +130,10 @@ All runtime config is read from environment variables (see `.env.example`).
 ### Model Provider
 
 ```bash
-# Google Gemini (default)
+# Google Gemini (recommended)
 MODEL_PROVIDER=gemini
 DEFAULT_MODEL=gemini-2.5-flash-lite
+GOOGLE_API_KEY=your_key
 
 # Z.AI (GLM via LiteLLM)
 MODEL_PROVIDER=zai
@@ -126,7 +141,7 @@ DEFAULT_MODEL=zai/glm-4.5
 ZAI_API_KEY=your_key
 ```
 
-Per-agent overrides: `MODEL_SCOPE_SCANNER`, `MODEL_MAGISTRATE`, etc.
+Per-agent model overrides: `MODEL_SCOPE_SCANNER`, `MODEL_NETWORK_MONITOR`, `MODEL_MAGISTRATE`, etc.
 
 ### Session Storage
 
@@ -152,6 +167,8 @@ METRICS_BACKEND_URL="http://your-prometheus:9090"
 METRICS_BEARER_TOKEN="your-token-if-needed"
 ```
 
+---
+
 ## Project Structure
 
 ```
@@ -163,6 +180,7 @@ agents/
 ├── analysis/
 │   ├── anomaly_detector/        # Anomaly scoring
 │   ├── vulnerability_assessor/  # Security scans
+│   ├── network_monitor/         # Network traffic analysis & threat detection
 │   └── thought_agent/           # Chain-of-thought reasoning
 ├── decision/
 │   └── security_magistrate/     # Verdict + severity + action plan
@@ -174,6 +192,12 @@ config/
 ├── constants.py                 # Domain constants (severity weights, attack types)
 └── policies/
     └── guardrails.yaml          # Blocked commands, confirmation gates, injection patterns
+
+scripts/
+├── run_network_monitor.py       # Standalone network monitor runner
+└── monitoring/
+    ├── agent_health_check.py    # Agent health diagnostics
+    └── system_diagnostics.py    # System diagnostics
 
 shared/
 ├── adk/
@@ -189,16 +213,53 @@ shared/
     ├── terminal_ui.py           # ANSI panel renderer (compact, rich, nested)
     └── env.py                   # Environment variable helpers
 
-secops_platform/
+overwatch_platform/
 └── orchestrator/
-    ├── orchestrator.py          # Entry point (~65 lines)
+    ├── orchestrator.py          # Entry point
     ├── runner_factory.py        # ADK Runner/Session/Memory wiring
     └── cli.py                   # Startup banner + conclusion report
+
+deployment/
+└── docker/
+    ├── Dockerfile.agent         # Full platform image
+    ├── Dockerfile.platform      # API server image
+    └── Dockerfile.network_monitor  # Standalone network monitor image
 
 tests/
 ├── unit/                        # Pipeline structure, guardrails, audit plugin tests
 └── integration/                 # Attack scenario tests (ransomware, cryptomining, etc.)
 ```
+
+---
+
+## Docker — Network Monitor
+
+```bash
+docker build \
+  -f deployment/docker/Dockerfile.network_monitor \
+  -t network_monitor:latest \
+  .
+
+# --network host lets the agent see real host connections
+docker run --rm \
+  --network host \
+  --env-file .env \
+  network_monitor:latest
+```
+
+---
+
+## Run Tests
+
+```bash
+# All tests
+uv run pytest tests/ -q
+
+# Single integration scenario
+uv run python -m tests.integration.runner --scenario container_escape
+```
+
+---
 
 ## Optional Tool Behavior
 
@@ -210,3 +271,4 @@ Discovery and security scans are best-effort. Missing tools (`kubectl`, `falco`,
 - All pipeline results are read from ADK session state, not scraped from tool responses
 - High-risk enforcer tools require human confirmation before execution
 - Set `ADK_AOP_UI=false` to disable the rich observability output
+- See [docs/RUNNING.md](docs/RUNNING.md) for detailed per-agent and per-tool run instructions

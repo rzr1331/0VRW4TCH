@@ -1,5 +1,5 @@
 agents
 config
+overwatch_platform
 scripts
-secops_platform
 shared

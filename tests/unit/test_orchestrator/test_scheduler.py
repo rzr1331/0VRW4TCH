@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from datetime import UTC, datetime, timedelta
 
-from secops_platform.orchestrator import scheduler
+from overwatch_platform.orchestrator import scheduler
 
 
 def _scope_payload(asset_ids: list[str]) -> dict:
